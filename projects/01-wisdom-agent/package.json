@@ -1,0 +1,24 @@
+{
+  "name": "01-wisdom-agent",
+  "version": "0.1.0",
+  "description": "A paid AI agent that dispenses wisdom using Lucid Agents + x402",
+  "type": "module",
+  "scripts": {
+    "dev": "bun run --watch src/index.ts",
+    "start": "bun run src/index.ts"
+  },
+  "dependencies": {
+    "@lucid-agents/core": "latest",
+    "@lucid-agents/types": "latest",
+    "@lucid-agents/http": "latest",
+    "@lucid-agents/hono": "latest",
+    "@lucid-agents/payments": "latest",
+    "hono": "^4.0.0",
+    "openai": "^4.0.0",
+    "zod": "^3.23.0"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "typescript": "^5.0.0"
+  }
+}
