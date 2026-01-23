@@ -14,7 +14,7 @@
     "@lucid-agents/hono": "latest",
     "@lucid-agents/payments": "latest",
     "hono": "^4.0.0",
-    "openai": "^4.0.0",
+    "@anthropic-ai/sdk": "^0.30.0",
     "zod": "^3.23.0"
   },
   "devDependencies": {

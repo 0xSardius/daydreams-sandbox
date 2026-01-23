@@ -3,11 +3,11 @@ import { createAgent } from "@lucid-agents/core";
 import { http } from "@lucid-agents/http";
 import { payments, paymentsFromEnv } from "@lucid-agents/payments";
 import { createAgentApp } from "@lucid-agents/hono";
-import OpenAI from "openai";
+import Anthropic from "@anthropic-ai/sdk";
 
-// Initialize OpenAI client
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
+// Initialize Anthropic client (Claude is goat)
+const anthropic = new Anthropic({
+  apiKey: process.env.ANTHROPIC_API_KEY,
 });
 
 // Price for wisdom (in USD)
@@ -106,27 +106,25 @@ addEntrypoint({
   async handler({ input }) {
     const { topic, style } = input;
 
-    // Generate wisdom using OpenAI
-    const completion = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
+    // Generate wisdom using Claude
+    const message = await anthropic.messages.create({
+      model: "claude-sonnet-4-20250514",
+      max_tokens: 150,
+      system: `You are a wise sage who dispenses wisdom in a ${style} style.
+Keep responses concise but profound (2-3 sentences).
+Be original - don't use common quotes.`,
       messages: [
-        {
-          role: "system",
-          content: `You are a wise sage who dispenses wisdom in a ${style} style.
-          Keep responses concise but profound (2-3 sentences).
-          Be original - don't use common quotes.`,
-        },
         {
           role: "user",
           content: `Share wisdom about: ${topic}`,
         },
       ],
-      max_tokens: 150,
     });
 
     const wisdom =
-      completion.choices[0]?.message?.content ??
-      "The greatest wisdom is knowing that wisdom cannot always be summoned on demand.";
+      message.content[0]?.type === "text"
+        ? message.content[0].text
+        : "The greatest wisdom is knowing that wisdom cannot always be summoned on demand.";
 
     return {
       output: {
@@ -160,28 +158,26 @@ addEntrypoint({
   async stream({ input }, emit) {
     const { topic, questions } = input;
 
-    const stream = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
+    const stream = anthropic.messages.stream({
+      model: "claude-sonnet-4-20250514",
+      max_tokens: 500,
+      system: `You are a wise philosopher giving a discourse on ${topic}.
+Address each question thoughtfully but concisely.
+Speak with gravitas but accessibility.`,
       messages: [
-        {
-          role: "system",
-          content: `You are a wise philosopher giving a discourse on ${topic}.
-          Address each question thoughtfully but concisely.
-          Speak with gravitas but accessibility.`,
-        },
         {
           role: "user",
           content: `Topic: ${topic}\n\nQuestions to address:\n${questions.map((q, i) => `${i + 1}. ${q}`).join("\n")}`,
         },
       ],
-      max_tokens: 500,
-      stream: true,
     });
 
-    for await (const chunk of stream) {
-      const content = chunk.choices[0]?.delta?.content;
-      if (content) {
-        emit({ chunk: content });
+    for await (const event of stream) {
+      if (
+        event.type === "content_block_delta" &&
+        event.delta.type === "text_delta"
+      ) {
+        emit({ chunk: event.delta.text });
       }
     }
   },
@@ -191,6 +187,7 @@ addEntrypoint({
 console.log(`
 ╔═══════════════════════════════════════════════════════════╗
 ║                     WISDOM AGENT                          ║
+║                   Powered by Claude                       ║
 ╠═══════════════════════════════════════════════════════════╣
 ║  Endpoints:                                               ║
 ║  • GET  /topics    - List topics (free)                   ║
